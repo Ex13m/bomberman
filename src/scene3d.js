@@ -21,8 +21,18 @@ const PU_COLOR = {
   [POWERUP.BOMB]: 0xc879f5,
   [POWERUP.FIRE]: 0xff7a45,
   [POWERUP.SPEED]: 0x2bd4e8,
-  [POWERUP.REMOTE]: 0xffd23f, // секрет — золотой
-  [POWERUP.GHOST]: 0xbfefff,  // секрет — призрачный
+  [POWERUP.REMOTE]: 0xffd23f,
+  [POWERUP.GHOST]: 0xbfefff,
+  [POWERUP.TELEPORT]: 0x9b5de5,
+  [POWERUP.SHIELD]: 0x4dd0e1,
+  [POWERUP.FREEZE]: 0x80d8ff,
+  [POWERUP.MAGNET]: 0xff5da2,
+  [POWERUP.MEGA]: 0xff3d00,
+  [POWERUP.BOMBRAIN]: 0xb0bec5,
+  [POWERUP.QUAKE]: 0x8d6e63,
+  [POWERUP.SWAP]: 0x00e676,
+  [POWERUP.TIMEWARP]: 0xffca28,
+  [POWERUP.JACKPOT]: 0xffd700,
 };
 
 // Пул переиспользуемых мешей: begin() → get()×N → end() прячет лишние.
@@ -156,9 +166,17 @@ export function initScene(canvas) {
       std(0xff4444, { emissive: 0xff2222, emissiveIntensity: 0.9 }));
     bulb.position.set(0, 0.99, 0);
 
-    g.add(f1, f2, body, head, visor, e1, e2, ant, bulb);
-    g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
-    g.userData = { feet: [f1, f2] };
+    // 🛡 щит-пузырь (скрыт по умолчанию)
+    const shield = new THREE.Mesh(
+      new THREE.SphereGeometry(0.55, 20, 16),
+      new THREE.MeshBasicMaterial({ color: 0x4dd0e1, transparent: true, opacity: 0.28, blending: THREE.AdditiveBlending, depthWrite: false }),
+    );
+    shield.position.y = 0.45;
+    shield.visible = false;
+
+    g.add(f1, f2, body, head, visor, e1, e2, ant, bulb, shield);
+    g.traverse((o) => { if (o.isMesh && o !== shield) o.castShadow = true; });
+    g.userData = { feet: [f1, f2], shield };
     return g;
   }
 
@@ -238,12 +256,18 @@ export function initScene(canvas) {
       if (!m) return;
       m.visible = p.alive;
       if (!p.alive) return;
-      const bob = p.moving ? Math.abs(Math.sin(p.walk)) * 0.06 : Math.sin(t * 3) * 0.02;
+      const frozen = p.frozenT > 0;
+      const bob = frozen ? 0 : (p.moving ? Math.abs(Math.sin(p.walk)) * 0.06 : Math.sin(t * 3) * 0.02);
       m.position.set(wc(p.col), bob, wr(p.row));
       m.rotation.y = DIR_Y[p.dir] ?? 0;
-      const sw = p.moving ? Math.sin(p.walk) * 0.12 : 0;
+      const sw = p.moving && !frozen ? Math.sin(p.walk) * 0.12 : 0;
       m.userData.feet[0].position.z = 0.04 + sw;
       m.userData.feet[1].position.z = 0.04 - sw;
+      // 🛡 щит виден, пока активен; ❄ заморозка — лёгкая пульсация щит-сферы голубым
+      const sh = m.userData.shield;
+      sh.visible = p.shield || frozen;
+      sh.material.color.set(frozen ? 0x80d8ff : 0x4dd0e1);
+      sh.material.opacity = frozen ? 0.35 : 0.22 + 0.1 * Math.sin(t * 6);
     });
 
     // Бомбы

@@ -3,7 +3,9 @@
 
 import {
   CELL, BOMB_FUSE, FLAME_TIME, COLS, ROWS,
-  POWERUP, POWERUP_CHANCE, SECRET_CHANCE, SPEED_STEP, MAX_SPEED,
+  POWERUP, POWERUP_CHANCE, SECRET_CHANCE, SECRETS, SPEED_STEP, MAX_SPEED,
+  MAGNET_TIME, MAGNET_RADIUS, FREEZE_TIME, TIMEWARP_TIME, INVULN_TIME,
+  BOMBRAIN_COUNT, QUAKE_RADIUS, MEGA_RANGE,
 } from './config.js';
 
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
@@ -42,10 +44,11 @@ export function placeBomb(game, player) {
   game.bombs.push({
     col, row,
     fuse: player.remote ? Infinity : BOMB_FUSE, // remote: ждёт ручного подрыва
-    range: player.range,
+    range: player.megaNext ? MEGA_RANGE : player.range, // 💥 мега-бомба на всю линию
     owner: player.id,
     pass: new Set([player.id]), // кто сейчас может пройти сквозь (стоит на ней)
   });
+  player.megaNext = false;
   game.events.push('place');
   return true;
 }
@@ -56,25 +59,86 @@ export function detonateOldest(game, player) {
   if (mine.length) mine[0].fuse = 0;
 }
 
-// Бонус выпадает из разрушенного блока. С шансом SECRET_CHANCE — секретный.
+// Бонус выпадает из разрушенного блока. С шансом SECRET_CHANCE — секретный (из пула).
 function maybeDropPowerup(game, col, row) {
   if (Math.random() > POWERUP_CHANCE) return;
   let type;
   if (Math.random() < SECRET_CHANCE) {
-    type = Math.random() < 0.5 ? POWERUP.REMOTE : POWERUP.GHOST;
+    type = SECRETS[(Math.random() * SECRETS.length) | 0];
   } else {
     const t = [POWERUP.BOMB, POWERUP.FIRE, POWERUP.SPEED];
-    type = t[Math.floor(Math.random() * t.length)];
+    type = t[(Math.random() * t.length) | 0];
   }
   game.powerups.push({ col, row, type });
 }
 
-function applyPowerup(p, type) {
-  if (type === POWERUP.BOMB) p.maxBombs += 1;
-  else if (type === POWERUP.FIRE) p.range += 1;
-  else if (type === POWERUP.SPEED) p.speed = Math.min(MAX_SPEED, p.speed + SPEED_STEP);
-  else if (type === POWERUP.REMOTE) p.remote = true;
-  else if (type === POWERUP.GHOST) p.bombPass = true;
+// Свободные клетки пола без бомб (для телепорта / ливня бомб).
+function freeCells(game) {
+  const out = [];
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (game.grid[r][c] === CELL.FLOOR && !bombAt(game, c, r)) out.push({ col: c, row: r });
+    }
+  }
+  return out;
+}
+
+const others = (game, p) => game.players.filter((o) => o !== p && o.alive);
+
+function applyPowerup(game, p, type) {
+  switch (type) {
+    // обычные
+    case POWERUP.BOMB: p.maxBombs += 1; break;
+    case POWERUP.FIRE: p.range += 1; break;
+    case POWERUP.SPEED: p.speed = Math.min(MAX_SPEED, p.speed + SPEED_STEP); break;
+    // ранее добавленные секреты
+    case POWERUP.REMOTE: p.remote = true; break;
+    case POWERUP.GHOST: p.bombPass = true; break;
+    // 10 новых секретов
+    case POWERUP.SHIELD: p.shield = true; break;
+    case POWERUP.MAGNET: p.magnetT = MAGNET_TIME; break;
+    case POWERUP.MEGA: p.megaNext = true; break;
+    case POWERUP.JACKPOT:
+      p.maxBombs += 2; p.range += 2;
+      p.speed = Math.min(MAX_SPEED, p.speed + 1.2);
+      break;
+    case POWERUP.FREEZE: others(game, p).forEach((o) => { o.frozenT = FREEZE_TIME; }); break;
+    case POWERUP.TIMEWARP: others(game, p).forEach((o) => { o.slowT = TIMEWARP_TIME; }); break;
+    case POWERUP.TELEPORT: {
+      const f = freeCells(game);
+      if (f.length) { const c = f[(Math.random() * f.length) | 0]; p.col = c.col; p.row = c.row; }
+      break;
+    }
+    case POWERUP.SWAP: {
+      const o = others(game, p)[0];
+      if (o) { const c = p.col, r = p.row; p.col = o.col; p.row = o.row; o.col = c; o.row = r; }
+      break;
+    }
+    case POWERUP.BOMBRAIN: {
+      const f = freeCells(game);
+      for (let i = f.length - 1; i > 0; i--) { // перемешать
+        const j = (Math.random() * (i + 1)) | 0; [f[i], f[j]] = [f[j], f[i]];
+      }
+      for (const c of f.slice(0, BOMBRAIN_COUNT)) {
+        game.bombs.push({ col: c.col, row: c.row, fuse: BOMB_FUSE, range: 2, owner: p.id, pass: new Set() });
+      }
+      break;
+    }
+    case POWERUP.QUAKE: {
+      const { col, row } = playerCell(p);
+      for (let dr = -QUAKE_RADIUS; dr <= QUAKE_RADIUS; dr++) {
+        for (let dc = -QUAKE_RADIUS; dc <= QUAKE_RADIUS; dc++) {
+          const c = col + dc, r = row + dr;
+          if (c >= 0 && r >= 0 && c < COLS && r < ROWS && game.grid[r][c] === CELL.BLOCK) {
+            game.grid[r][c] = CELL.FLOOR;
+            maybeDropPowerup(game, c, r);
+          }
+        }
+      }
+      break;
+    }
+    default: break;
+  }
 }
 
 // Взрыв: крест из лучей, гаснет на стене, рушит первый блок, детонирует чужие бомбы.
@@ -149,22 +213,38 @@ export function updateBombs(game, dt) {
   game.flames = game.flames.filter((f) => f.time > 0);
   const flameKeys = new Set(game.flames.map((f) => `${f.col},${f.row}`));
   for (const p of game.players) {
-    if (p.alive && corners(p).some(([c, r]) => flameKeys.has(`${c},${r}`))) {
-      p.alive = false;
-      game.events.push('death');
+    if (!p.alive || p.invulnT > 0) continue;
+    if (corners(p).some(([c, r]) => flameKeys.has(`${c},${r}`))) {
+      if (p.shield) { p.shield = false; p.invulnT = INVULN_TIME; } // 🛡 спасает один раз
+      else { p.alive = false; game.events.push('death'); }
     }
   }
 
-  // Пламя сжигает бонусы.
-  game.powerups = game.powerups.filter((u) => !flameKeys.has(`${u.col},${u.row}`));
+  // Пламя сжигает бонусы (по клетке, в которой бонус сейчас находится).
+  game.powerups = game.powerups.filter(
+    (u) => !flameKeys.has(`${Math.round(u.col)},${Math.round(u.row)}`),
+  );
 
-  // Подбор бонусов: игрок встал центром на клетку с бонусом.
+  // 🧲 Магнит: бонусы тянутся к игроку.
+  for (const p of game.players) {
+    if (!p.alive || p.magnetT <= 0) continue;
+    for (const u of game.powerups) {
+      const ddx = (p.col - u.col), ddy = (p.row - u.row);
+      const d = Math.hypot(ddx, ddy);
+      if (d > 0.05 && d < MAGNET_RADIUS) {
+        const m = Math.min(4 * dt, d);
+        u.col += (ddx / d) * m;
+        u.row += (ddy / d) * m;
+      }
+    }
+  }
+
+  // Подбор бонусов: игрок близко к центру бонуса (устойчиво к дробным позициям).
   for (const p of game.players) {
     if (!p.alive) continue;
-    const { col, row } = playerCell(p);
-    const idx = game.powerups.findIndex((u) => u.col === col && u.row === row);
+    const idx = game.powerups.findIndex((u) => Math.hypot(p.col - u.col, p.row - u.row) < 0.7);
     if (idx >= 0) {
-      applyPowerup(p, game.powerups[idx].type);
+      applyPowerup(game, p, game.powerups[idx].type);
       game.powerups.splice(idx, 1);
       game.events.push('powerup');
     }
