@@ -2,7 +2,8 @@
 
 import { TILE, COLS, ROWS } from './config.js';
 import { createGame } from './game.js';
-import { initInput, isDown } from './input.js';
+import { initInput } from './input.js';
+import { updatePlayer } from './player.js';
 import { render } from './render.js';
 
 const canvas = document.getElementById('game');
@@ -28,10 +29,10 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 
-// Шаг симуляции. Движение/бомбы/взрывы добавляются следующими инкрементами.
+// Шаг симуляции. Бомбы/взрывы добавляются следующими инкрементами.
 function update(dt) {
-  void dt;
-  void isDown;
+  if (game.status !== 'playing') return;
+  for (const p of game.players) updatePlayer(game, p, dt);
 }
 
 requestAnimationFrame(loop);
