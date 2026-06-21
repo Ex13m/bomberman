@@ -21,6 +21,8 @@ const PU_COLOR = {
   [POWERUP.BOMB]: 0xc879f5,
   [POWERUP.FIRE]: 0xff7a45,
   [POWERUP.SPEED]: 0x2bd4e8,
+  [POWERUP.REMOTE]: 0xffd23f, // секрет — золотой
+  [POWERUP.GHOST]: 0xbfefff,  // секрет — призрачный
 };
 
 // Пул переиспользуемых мешей: begin() → get()×N → end() прячет лишние.
@@ -211,6 +213,16 @@ export function initScene(canvas) {
   }
 
   function frame(game, t) {
+    // Секрет: disco-режим перекрашивает свет в радугу
+    if (game.discoT > 0) {
+      const hue = (t * 0.25) % 1;
+      hemi.color.setHSL(hue, 0.7, 0.7);
+      sun.color.setHSL((hue + 0.5) % 1, 0.65, 0.6);
+    } else {
+      hemi.color.set(0xbfd4ff);
+      sun.color.set(0xfff2d8);
+    }
+
     // Снести меши разрушенных блоков
     for (const [key, mesh] of blockMap) {
       const [c, r] = key.split(',').map(Number);

@@ -24,9 +24,14 @@ export const START_RANGE = 1;
 
 // Бонусы из разрушенных блоков
 export const POWERUP_CHANCE = 0.32; // шанс выпадения бонуса из блока
+export const SECRET_CHANCE = 0.18;  // доля «секретных» среди выпавших бонусов
 export const SPEED_STEP = 0.6;      // прибавка скорости за бонус
 export const MAX_SPEED = 8;         // потолок скорости
-export const POWERUP = { BOMB: 'bomb', FIRE: 'fire', SPEED: 'speed' };
+// bomb/fire/speed — обычные; remote/ghost — секретные способности
+export const POWERUP = {
+  BOMB: 'bomb', FIRE: 'fire', SPEED: 'speed',
+  REMOTE: 'remote', GHOST: 'ghost',
+};
 
 // Игроки: старт в противоположных углах, своя раскладка клавиш.
 export const PLAYERS = [

@@ -3,7 +3,7 @@
 
 import {
   CELL, BOMB_FUSE, FLAME_TIME, COLS, ROWS,
-  POWERUP, POWERUP_CHANCE, SPEED_STEP, MAX_SPEED,
+  POWERUP, POWERUP_CHANCE, SECRET_CHANCE, SPEED_STEP, MAX_SPEED,
 } from './config.js';
 
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
@@ -32,27 +32,40 @@ export function bombAt(game, col, row) {
   return game.bombs.find((b) => b.col === col && b.row === row) || null;
 }
 
+// Ставит бомбу. Возвращает true, если поставлена (для remote-логики).
 export function placeBomb(game, player) {
-  if (!player.alive) return;
+  if (!player.alive) return false;
   const active = game.bombs.filter((b) => b.owner === player.id).length;
-  if (active >= player.maxBombs) return; // лимит одновременных бомб
+  if (active >= player.maxBombs) return false; // лимит одновременных бомб
   const { col, row } = playerCell(player);
-  if (bombAt(game, col, row)) return; // не больше одной бомбы на клетку
+  if (bombAt(game, col, row)) return false; // не больше одной бомбы на клетку
   game.bombs.push({
     col, row,
-    fuse: BOMB_FUSE,
+    fuse: player.remote ? Infinity : BOMB_FUSE, // remote: ждёт ручного подрыва
     range: player.range,
     owner: player.id,
     pass: new Set([player.id]), // кто сейчас может пройти сквозь (стоит на ней)
   });
   game.events.push('place');
+  return true;
 }
 
-// Бонус выпадает из разрушенного блока с шансом POWERUP_CHANCE.
+// Секрет Remote: подрывает самую старую живую бомбу игрока.
+export function detonateOldest(game, player) {
+  const mine = game.bombs.filter((b) => b.owner === player.id);
+  if (mine.length) mine[0].fuse = 0;
+}
+
+// Бонус выпадает из разрушенного блока. С шансом SECRET_CHANCE — секретный.
 function maybeDropPowerup(game, col, row) {
   if (Math.random() > POWERUP_CHANCE) return;
-  const types = [POWERUP.BOMB, POWERUP.FIRE, POWERUP.SPEED];
-  const type = types[Math.floor(Math.random() * types.length)];
+  let type;
+  if (Math.random() < SECRET_CHANCE) {
+    type = Math.random() < 0.5 ? POWERUP.REMOTE : POWERUP.GHOST;
+  } else {
+    const t = [POWERUP.BOMB, POWERUP.FIRE, POWERUP.SPEED];
+    type = t[Math.floor(Math.random() * t.length)];
+  }
   game.powerups.push({ col, row, type });
 }
 
@@ -60,6 +73,8 @@ function applyPowerup(p, type) {
   if (type === POWERUP.BOMB) p.maxBombs += 1;
   else if (type === POWERUP.FIRE) p.range += 1;
   else if (type === POWERUP.SPEED) p.speed = Math.min(MAX_SPEED, p.speed + SPEED_STEP);
+  else if (type === POWERUP.REMOTE) p.remote = true;
+  else if (type === POWERUP.GHOST) p.bombPass = true;
 }
 
 // Взрыв: крест из лучей, гаснет на стене, рушит первый блок, детонирует чужие бомбы.

@@ -41,3 +41,5 @@
 5. ✅ Бонусы из блоков (💣 бомбы / 🔥 радиус / ⚡ скорость), HUD, звук (Higgsfield SFX).
 6. ✅ Финал: PDF `output/out-bomberman-making-of.pdf` — движок (Vanilla JS + Canvas)
    и скил (`/born`), история коммитов, звук, с 4 картинками из **Higgsfield** (GPT Image 2).
+7. ✅ 3D: рендер переписан на **Three.js** (vendor/), сцена/тени/анимация — логика та же.
+8. ✅ Музыка (Higgsfield Sonilo, M — вкл/выкл) + секреты: 🟡 Remote, 👻 Ghost, код Konami (disco).

@@ -57,6 +57,7 @@ export function createGame(seed = 1) {
     powerups: [],  // выпавшие бонусы {col,row,type}
     particles: [], // визуальные частицы взрывов {x,y,vx,vy,life,max,size,color}
     events: [],    // очередь событий для звука: 'place'|'explode'|'powerup'|'death'|'win'
+    discoT: 0,     // секрет: оставшееся время disco-режима (сек)
     status: 'playing', // 'playing' | 'over'
     winner: null,      // id победителя или 'draw'
   };

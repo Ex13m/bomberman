@@ -21,6 +21,8 @@ export function createPlayer(def) {
     dir: 'down',           // направление взгляда: up|down|left|right
     walk: 0,               // фаза анимации шага
     moving: false,         // двигается ли сейчас (для walk-cycle)
+    remote: false,         // секрет: ручной подрыв своих бомб
+    bombPass: false,       // секрет: проходить сквозь бомбы (ghost)
   };
 }
 
@@ -36,7 +38,7 @@ function canStand(game, p, col, row) {
     const cc = Math.floor(x), cr = Math.floor(y);
     if (cellAt(game, cc, cr) !== CELL.FLOOR) return false;
     const b = bombAt(game, cc, cr);
-    if (b && !b.pass.has(p.id)) return false;
+    if (b && !b.pass.has(p.id) && !p.bombPass) return false; // ghost проходит сквозь
   }
   return true;
 }

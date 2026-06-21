@@ -13,10 +13,20 @@ let ctx = null;
 const buffers = {};
 let enabled = true;
 
+// Фоновая музыка — через HTMLAudioElement (надёжно тянет m4a/aac и зацикливание).
+let music = null;
+const MUSIC_URL = './assets/music/theme.m4a';
+
 // Вызывать после первого пользовательского жеста (иначе AudioContext заблокирован).
 export async function initAudio() {
   if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
   if (ctx.state === 'suspended') await ctx.resume();
+  if (!music) {
+    music = new Audio(MUSIC_URL);
+    music.loop = true;
+    music.volume = 0.32;
+  }
+  music.play().catch(() => { /* нет файла / автоплей — без музыки */ });
   await Promise.all(Object.entries(FILES).map(async ([key, url]) => {
     if (buffers[key]) return;
     try {
@@ -27,6 +37,14 @@ export async function initAudio() {
       /* нет файла / ошибка декодирования — играем без этого звука */
     }
   }));
+}
+
+// Вкл/выкл музыку (клавиша M). Возвращает новое состояние.
+export function toggleMusic() {
+  if (!music) return false;
+  if (music.paused) { music.play().catch(() => {}); return true; }
+  music.pause();
+  return false;
 }
 
 export function play(name) {

@@ -8,8 +8,9 @@ export function updateHud(game) {
   hudEl.innerHTML = game.players
     .map((p) => {
       const dead = p.alive ? '' : ' 💀';
+      const secret = (p.remote ? ' 🟡' : '') + (p.bombPass ? ' 👻' : '');
       return `<span class="p" style="color:${p.color}">P${p.id}</span> `
-        + `💣${p.maxBombs} 🔥${p.range} ⚡${p.speed.toFixed(1)}${dead}`;
+        + `💣${p.maxBombs} 🔥${p.range} ⚡${p.speed.toFixed(1)}${secret}${dead}`;
     })
     .join('<span class="sep">·</span>');
 }
