@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bomberman — клон (2 игрока)</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: #1b1b1f;
+      color: #e6e6e6;
+      font-family: system-ui, sans-serif;
+    }
+    h1 { margin: 8px 0 0; font-size: 20px; }
+    canvas {
+      background: #0f0f12;
+      border: 2px solid #333;
+      image-rendering: pixelated;
+    }
+    .hint { font-size: 13px; color: #9aa; }
+    .hint b { color: #cde; }
+  </style>
+</head>
+<body>
+  <h1>💣 Bomberman — клон на двоих</h1>
+  <canvas id="game"></canvas>
+  <p class="hint">
+    Игрок 1: <b>WASD</b> + <b>Space</b> (бомба) &nbsp;·&nbsp;
+    Игрок 2: <b>стрелки</b> + <b>Enter</b> (бомба) &nbsp;·&nbsp;
+    <b>R</b> — рестарт
+  </p>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
