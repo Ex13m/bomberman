@@ -26,10 +26,21 @@
     }
     .hint { font-size: 13px; color: #9aa; }
     .hint b { color: #cde; }
+    #hud {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      font-size: 15px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.3px;
+    }
+    #hud .p { font-weight: 700; }
+    #hud .sep { color: #555; margin: 0 6px; }
   </style>
 </head>
 <body>
   <h1>💣 Bomberman — клон на двоих</h1>
+  <div id="hud"></div>
   <canvas id="game"></canvas>
   <p class="hint">
     Игрок 1: <b>WASD</b> + <b>Space</b> (бомба) &nbsp;·&nbsp;

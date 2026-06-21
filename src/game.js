@@ -54,9 +54,22 @@ export function createGame(seed = 1) {
     players: PLAYERS.map(createPlayer),
     bombs: [],     // активные бомбы
     flames: [],    // активные клетки пламени
+    powerups: [],  // выпавшие бонусы {col,row,type}
+    events: [],    // очередь событий для звука: 'place'|'explode'|'powerup'|'death'|'win'
     status: 'playing', // 'playing' | 'over'
     winner: null,      // id победителя или 'draw'
   };
+}
+
+// Раунд окончен, когда живых ≤ 1: победитель — последний живой, иначе ничья.
+export function checkWinner(game) {
+  if (game.status !== 'playing') return;
+  const alive = game.players.filter((p) => p.alive);
+  if (alive.length <= 1) {
+    game.status = 'over';
+    game.winner = alive.length === 1 ? alive[0].id : 'draw';
+    game.events.push('win');
+  }
 }
 
 export function cellAt(game, col, row) {

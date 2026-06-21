@@ -16,8 +16,17 @@ export const BLOCK_DENSITY = 0.55;
 
 // Бомбы
 export const BOMB_FUSE = 2.0;    // сек до взрыва
-export const BOMB_RANGE = 2;     // длина луча взрыва в клетках
 export const FLAME_TIME = 0.5;   // сек, сколько держится пламя
+
+// Стартовые параметры игрока (как в оригинале: 1 бомба, радиус 1)
+export const START_BOMBS = 1;
+export const START_RANGE = 1;
+
+// Бонусы из разрушенных блоков
+export const POWERUP_CHANCE = 0.32; // шанс выпадения бонуса из блока
+export const SPEED_STEP = 0.6;      // прибавка скорости за бонус
+export const MAX_SPEED = 8;         // потолок скорости
+export const POWERUP = { BOMB: 'bomb', FIRE: 'fire', SPEED: 'speed' };
 
 // Игроки: старт в противоположных углах, своя раскладка клавиш.
 export const PLAYERS = [
