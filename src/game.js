@@ -55,6 +55,7 @@ export function createGame(seed = 1) {
     bombs: [],     // активные бомбы
     flames: [],    // активные клетки пламени
     powerups: [],  // выпавшие бонусы {col,row,type}
+    particles: [], // визуальные частицы взрывов {x,y,vx,vy,life,max,size,color}
     events: [],    // очередь событий для звука: 'place'|'explode'|'powerup'|'death'|'win'
     status: 'playing', // 'playing' | 'over'
     winner: null,      // id победителя или 'draw'

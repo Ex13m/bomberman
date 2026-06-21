@@ -15,8 +15,13 @@ Thumbs.db
 .env.*
 secrets.*
 
-# --- сторонний тулинг агентов (Higgsfield skills и т.п.) ---
+# --- зависимости / тулинг ---
+node_modules/
 .agents/
 skills-lock.json
+
+# --- тяжёлые исходники картинок для PDF (сам PDF оставляем) ---
+output/pdf-img/
+output/_preview.png
 
 # Папки структуры коммитим даже пустыми — за это отвечают .gitkeep

@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bomberman — клон (2 игрока)</title>
+  <title>Bomberman 3D — клон на двоих</title>
   <style>
     :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       min-height: 100vh;
@@ -13,38 +14,54 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 12px;
-      background: #1b1b1f;
+      gap: 10px;
+      background: radial-gradient(circle at 50% 0%, #20242e, #0e0f14);
       color: #e6e6e6;
       font-family: system-ui, sans-serif;
     }
-    h1 { margin: 8px 0 0; font-size: 20px; }
-    canvas {
-      background: #0f0f12;
-      border: 2px solid #333;
-      image-rendering: pixelated;
+    h1 { margin: 6px 0 0; font-size: 20px; }
+    #stage { position: relative; }
+    #game {
+      width: min(92vw, 900px);
+      height: min(64vw, 620px);
+      display: block;
+      border-radius: 12px;
+      box-shadow: 0 18px 50px rgba(0,0,0,0.55);
     }
-    .hint { font-size: 13px; color: #9aa; }
-    .hint b { color: #cde; }
-    #hud {
-      display: flex;
-      gap: 14px;
+    #banner {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
       align-items: center;
-      font-size: 15px;
-      font-variant-numeric: tabular-nums;
-      letter-spacing: 0.3px;
+      justify-content: center;
+      gap: 10px;
+      background: rgba(8,10,16,0.55);
+      border-radius: 12px;
+      backdrop-filter: blur(2px);
+    }
+    #banner .title { font-size: 44px; font-weight: 800; text-shadow: 0 0 24px currentColor; }
+    #banner .sub { font-size: 18px; color: #cdd6e0; }
+    #hud {
+      display: flex; gap: 12px; align-items: center;
+      font-size: 15px; font-variant-numeric: tabular-nums; letter-spacing: 0.3px;
     }
     #hud .p { font-weight: 700; }
     #hud .sep { color: #555; margin: 0 6px; }
+    .hint { font-size: 13px; color: #9aa; }
+    .hint b { color: #cde; }
   </style>
 </head>
 <body>
-  <h1>💣 Bomberman — клон на двоих</h1>
+  <h1>💣 Bomberman 3D — на двоих</h1>
   <div id="hud"></div>
-  <canvas id="game"></canvas>
+  <div id="stage">
+    <canvas id="game"></canvas>
+    <div id="banner"></div>
+  </div>
   <p class="hint">
-    Игрок 1: <b>WASD</b> + <b>Space</b> (бомба) &nbsp;·&nbsp;
-    Игрок 2: <b>стрелки</b> + <b>Enter</b> (бомба) &nbsp;·&nbsp;
+    Игрок 1: <b>WASD</b> + <b>Space</b> &nbsp;·&nbsp;
+    Игрок 2: <b>стрелки</b> + <b>Enter</b> &nbsp;·&nbsp;
     <b>R</b> — рестарт
   </p>
   <script type="module" src="./src/main.js"></script>

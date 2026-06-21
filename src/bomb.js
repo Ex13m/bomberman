@@ -83,7 +83,26 @@ function explode(game, bomb) {
     }
   }
   for (const c of cells) game.flames.push({ col: c.col, row: c.row, time: FLAME_TIME });
+  spawnParticles(game, bomb.col, bomb.row);
   game.events.push('explode');
+}
+
+// Осколки-частицы из центра взрыва (чисто визуально).
+const SPARK_COLORS = ['#fff3c4', '#ffd54f', '#ff8f3f', '#ff5722'];
+function spawnParticles(game, col, row) {
+  const cx = col + 0.5, cy = row + 0.5;
+  for (let i = 0; i < 14; i++) {
+    const ang = (Math.PI * 2 * i) / 14 + Math.random() * 0.4;
+    const sp = 1.6 + Math.random() * 3.2; // клеток/сек
+    game.particles.push({
+      x: cx, y: cy,
+      vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 1,
+      life: 0.4 + Math.random() * 0.35,
+      max: 0.75,
+      size: 2 + Math.random() * 3,
+      color: SPARK_COLORS[(Math.random() * SPARK_COLORS.length) | 0],
+    });
+  }
 }
 
 export function updateBombs(game, dt) {
@@ -100,6 +119,15 @@ export function updateBombs(game, dt) {
       if (!p || !overlapsCell(p, bomb.col, bomb.row)) bomb.pass.delete(id);
     }
   }
+
+  // Частицы: движение с гравитацией и затухание.
+  for (const pt of game.particles) {
+    pt.x += pt.vx * dt;
+    pt.y += pt.vy * dt;
+    pt.vy += 7 * dt; // гравитация в клетках/сек²
+    pt.life -= dt;
+  }
+  game.particles = game.particles.filter((pt) => pt.life > 0);
 
   // Пламя: таймер и урон.
   for (const f of game.flames) f.time -= dt;

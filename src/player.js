@@ -18,6 +18,9 @@ export function createPlayer(def) {
     maxBombs: START_BOMBS, // одновременных бомб (растёт от бонусов)
     range: START_RANGE,    // радиус взрыва (растёт от бонусов)
     speed: MOVE_SPEED,     // клеток/сек (растёт от бонусов)
+    dir: 'down',           // направление взгляда: up|down|left|right
+    walk: 0,               // фаза анимации шага
+    moving: false,         // двигается ли сейчас (для walk-cycle)
   };
 }
 
@@ -39,16 +42,27 @@ function canStand(game, p, col, row) {
 }
 
 export function updatePlayer(game, p, dt) {
-  if (!p.alive) return;
+  if (!p.alive) { p.moving = false; return; }
   const k = p.keys;
-  let dx = (isDown(k.right) ? 1 : 0) - (isDown(k.left) ? 1 : 0);
-  let dy = (isDown(k.down) ? 1 : 0) - (isDown(k.up) ? 1 : 0);
-  if (dx === 0 && dy === 0) return;
+  const dx = (isDown(k.right) ? 1 : 0) - (isDown(k.left) ? 1 : 0);
+  const dy = (isDown(k.down) ? 1 : 0) - (isDown(k.up) ? 1 : 0);
+
+  // Направление взгляда (горизонталь приоритетнее при диагонали).
+  if (dx > 0) p.dir = 'right';
+  else if (dx < 0) p.dir = 'left';
+  else if (dy > 0) p.dir = 'down';
+  else if (dy < 0) p.dir = 'up';
+
+  if (dx === 0 && dy === 0) { p.moving = false; return; }
 
   const step = p.speed * dt;
+  let moved = false;
   // Двигаем по осям раздельно — скольжение вдоль стен.
   const nx = p.col + dx * step;
-  if (canStand(game, p, nx, p.row)) p.col = nx;
+  if (canStand(game, p, nx, p.row)) { p.col = nx; moved = true; }
   const ny = p.row + dy * step;
-  if (canStand(game, p, p.col, ny)) p.row = ny;
+  if (canStand(game, p, p.col, ny)) { p.row = ny; moved = true; }
+
+  p.moving = moved;
+  if (moved) p.walk += dt * 11; // продвигаем walk-cycle
 }
