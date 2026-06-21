@@ -15,4 +15,8 @@ Thumbs.db
 .env.*
 secrets.*
 
+# --- сторонний тулинг агентов (Higgsfield skills и т.п.) ---
+.agents/
+skills-lock.json
+
 # Папки структуры коммитим даже пустыми — за это отвечают .gitkeep
